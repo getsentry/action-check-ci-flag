@@ -1,22 +1,39 @@
-<p align="center">
-  <a href="https://github.com/actions/typescript-action/actions"><img alt="typescript-action status" src="https://github.com/actions/typescript-action/workflows/build-test/badge.svg"></a>
-</p>
+# Read CI Flag
 
-# Create a JavaScript Action using TypeScript
+This GitHub Action will parse a pull request description to look for a special
+text flag that controls the desired CI jobs.
 
-Use this template to bootstrap the creation of a TypeScript action.:rocket:
+The action scans the description text for a line that begins with a special
+prefix (`label`), optionally followed by a colon. The label is followed by a
+list of one or more flags, delimited by whitespace and/or commas. The label and
+flags are case-insensitive.
 
-This template includes compilation support, tests, a validation workflow, publishing, and versioning guidance.  
+For example, if the action is run with `label: Silo Mode`, then the following
+description would have the flags `control` and `all`:
 
-If you are new, there's also a simpler introduction.  See the [Hello World JavaScript Action](https://github.com/actions/hello-world-javascript-action)
+> Fix a regression from #94054 so that signing in no longer causes the database
+> to be dropped.
+>
+> Silo Mode: control, all
+>
+> Depends on #93383.
 
-## Create an action from this template
+## Using
 
-Click the `Use this Template` and provide the new repo details for your action
+### Inputs
 
-## Code in Main
+* `appId`: GitHub App ID to read the pull request.
+* `privateKey`: GitHub App private key to read the pull request.
+* `label`: The prefix that designates a line in the pull request description to
+  contain the flags.
+* `targets`: A list of one or more flag values to check for.
 
-> First, you'll need to have a reasonably modern version of `node` handy. This won't work with versions older than 9, for instance.
+### Outputs
+
+* `isFlagPresent`: A boolean value indicating whether one or more of the target
+  flags were found in the pull request's description.
+
+## Developing
 
 Install the dependencies  
 ```bash
@@ -31,75 +48,4 @@ $ yarn dist
 Run the tests :heavy_check_mark:  
 ```bash
 $ yarn test
-
- PASS  ./index.test.js
-  ✓ throws invalid number (3ms)
-  ✓ wait 500 ms (504ms)
-  ✓ test runs (95ms)
-
-...
 ```
-
-## Change action.yml
-
-The action.yml defines the inputs and output for your action.
-
-Update the action.yml with your name, description, inputs and outputs for your action.
-
-See the [documentation](https://help.github.com/en/articles/metadata-syntax-for-github-actions)
-
-## Change the Code
-
-Most toolkit and CI/CD operations involve async operations so the action is run in an async function.
-
-```javascript
-import * as core from '@actions/core';
-...
-
-async function run() {
-  try { 
-      ...
-  } 
-  catch (error) {
-    core.setFailed(error.message);
-  }
-}
-
-run()
-```
-
-See the [toolkit documentation](https://github.com/actions/toolkit/blob/master/README.md#packages) for the various packages.
-
-## Publish to a distribution branch
-
-Actions are run from GitHub repos so we will checkin the packed dist folder. 
-
-Then run [ncc](https://github.com/zeit/ncc) and push the results:
-```bash
-$ yarn dist
-$ git add dist
-$ git commit -a -m "prod dependencies"
-$ git push origin releases/v1
-```
-
-Note: We recommend using the `--license` option for ncc, which will create a license file for all of the production node modules used in your project.
-
-Your action is now published! :rocket: 
-
-See the [versioning documentation](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-
-## Validate
-
-You can now validate the action by referencing `./` in a workflow in your repo (see [test.yml](.github/workflows/test.yml))
-
-```yaml
-uses: ./
-with:
-  milliseconds: 1000
-```
-
-See the [actions tab](https://github.com/actions/typescript-action/actions) for runs of this action! :rocket:
-
-## Usage:
-
-After testing you can [create a v1 tag](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md) to reference the stable and latest V1 action

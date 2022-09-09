@@ -1,11 +1,22 @@
-name: 'Your name here'
-description: 'Provide a description here'
+name: 'Read CI Flag'
+description: 'Check the PR description for a flag that controls which CI jobs to run'
 author: 'Sentry'
 inputs:
-  milliseconds: # change this
+  appId:
     required: true
-    description: 'input description here'
-    default: 'default value if applicable'
+    description: GitHub App ID
+  privateKey:
+    required: true
+    description: GitHub App private key
+  label:
+    required: true
+    description: The prefix for a line containing the flags
+  targets:
+    required: true
+    description: A list (delimited by whitespace and/or commas) of flags to check for
+outputs:
+  isFlagPresent:
+    description: A boolean value indicating whether any of the target flags were found
 runs:
   using: 'node12'
   main: 'dist/index.js'

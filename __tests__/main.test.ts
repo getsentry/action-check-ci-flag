@@ -1,29 +1,51 @@
-import {wait} from '../src/wait'
-import * as process from 'process'
-import * as cp from 'child_process'
-import * as path from 'path'
-import {expect, test} from '@jest/globals'
-
-test('throws invalid number', async () => {
-  const input = parseInt('foo', 10);
-  await expect(wait(input)).rejects.toThrow('milliseconds not a number');
-});
-
-test('wait 500 ms', async () => {
-  const start = new Date();
-  await wait(500);
-  const end = new Date();
-  var delta = Math.abs(end.getTime() - start.getTime());
-  expect(delta).toBeGreaterThan(450);
-});
+import * as process from 'process';
+import * as cp from 'child_process';
+import * as path from 'path';
+import {parseFlagList, checkTextForFlag} from '../src/main';
 
 // shows how the runner will run a javascript action with env / stdout protocol
 test('test runs', () => {
-  process.env['INPUT_MILLISECONDS'] = '500'
-  const np = process.execPath
-  const ip = path.join(__dirname, '..', 'lib', 'main.js')
-  const options: cp.ExecFileSyncOptions = {
-    env: process.env
+  const ip = path.join(__dirname, '..', 'lib', 'main.js');
+  const options: cp.ExecSyncOptions = {env: process.env};
+  cp.execSync(`node ${ip}`, options).toString();
+});
+
+test('parses lists of flags', () => {
+  expect(parseFlagList('')).toEqual([]);
+  expect(parseFlagList(' ')).toEqual([]);
+  expect(parseFlagList('foo')).toEqual(['foo']);
+  expect(parseFlagList(' foo')).toEqual(['foo']);
+  expect(parseFlagList('foo ')).toEqual(['foo']);
+  expect(parseFlagList(' foo ')).toEqual(['foo']);
+  expect(parseFlagList('foo,bar,baz')).toEqual(['foo', 'bar', 'baz']);
+  expect(parseFlagList('foo, bar , baz')).toEqual(['foo', 'bar', 'baz']);
+  expect(parseFlagList('foo bar  baz')).toEqual(['foo', 'bar', 'baz']);
+});
+
+test('finds flags from text', () => {
+  function placeBetweenParagraphs(t: string) {
+    return `Some text\n\n${t}\n\nSome other text`;
   }
-  console.log(cp.execFileSync(np, [ip], options).toString())
-})
+
+  expect(checkTextForFlag('', '', '')).toBe(false);
+  expect(checkTextForFlag('foo', 'My flag', 'My flag foo')).toBe(true);
+  expect(checkTextForFlag('foo', 'My flag', 'My flag: foo')).toBe(true);
+  expect(checkTextForFlag('foo', 'My flag', 'My flag')).toBe(false);
+  expect(checkTextForFlag('foo', 'My flag', 'My flag: ')).toBe(false);
+  expect(checkTextForFlag('foo', 'My flag', 'mY fLaG: foo')).toBe(true);
+  expect(checkTextForFlag('foo', 'My flag', '  My flag:  foo ')).toBe(true);
+  expect(checkTextForFlag('foo', 'My flag', 'My flag: baz,foo')).toBe(true);
+  expect(checkTextForFlag('foo,bar', 'My flag', 'My flag: foo,qux')).toBe(true);
+  expect(checkTextForFlag('foo', 'My flag', 'My flag: bar,baz')).toBe(false);
+
+  expect(
+    checkTextForFlag('foo', 'My flag', placeBetweenParagraphs('My flag: foo'))
+  ).toBe(true);
+  expect(
+    checkTextForFlag(
+      'foo',
+      'My flag',
+      placeBetweenParagraphs('My flag: bar,baz')
+    )
+  ).toBe(false);
+});
