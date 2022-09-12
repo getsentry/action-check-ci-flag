@@ -16,7 +16,7 @@ async function readPrDescription(): Promise<string | null> {
   const {owner, repo} = github.context.repo;
   const token = await getToken(id, privateKey);
   const octokit = github.getOctokit(token);
-  const pullRequest = await octokit.pulls.get({
+  const pullRequest = await octokit.rest.pulls.get({
     owner,
     repo,
     pull_number: pullRequestPayload.number,
